@@ -1,5 +1,2 @@
 unsloth
-unsloth_zoo
 datasets
-huggingface_hub
-transformers>=5

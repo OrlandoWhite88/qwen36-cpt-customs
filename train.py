@@ -137,7 +137,10 @@ def parse_args() -> argparse.Namespace:
     g.add_argument("--seed", type=int, default=3407)
 
     g = p.add_argument_group("model")
-    g.add_argument("--model-name", default="unsloth/Qwen3.6-27B")
+    g.add_argument("--model-name", default="unsloth/Qwen3.5-27B",
+                   help="Default unsloth/Qwen3.5-27B works out of the box on Hopper. "
+                        "Pass unsloth/Qwen3.6-27B if your stack has FLA + tilelang/Triton 3.3 "
+                        "configured (Qwen3.6 has Gated DeltaNet which needs flash-linear-attention).")
     g.add_argument("--max-seq-length", type=int, default=4096)
     g.add_argument("--load-in-4bit", action="store_true",
                    help="QLoRA mode for 24-48GB GPUs (default off; 16-bit LoRA).")

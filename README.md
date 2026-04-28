@@ -63,12 +63,21 @@ End-to-end takes ~75 seconds (3 s read + 70 s tokenize + a couple of minutes to 
 On a fresh GPU VM:
 
 ```bash
-uv pip install -r requirements.txt
-huggingface-cli login                                  # or: export HF_TOKEN=hf_...
+uv pip install -r requirements.txt --system
+hf auth login                                          # or: export HF_TOKEN=hf_...
 python train.py \
-    --hf-dataset   <yourname>/customs-rulings-cpt \
-    --push-to-hub  <yourname>/qwen36-27b-cpt-customs
+    --hf-dataset  <yourname>/customs-rulings-cpt \
+    --push-to-hub <yourname>/qwen35-27b-cpt-customs
 ```
+
+**Default model is `unsloth/Qwen3.5-27B`** because Qwen3.6's Gated DeltaNet
+attention currently requires a fragile kernel stack (`flash-linear-attention`
+plus tilelang or Triton 3.3.x) that is not stable on Hopper + recent CUDA at
+the time of writing. Qwen3.5-27B has the same parameter count, the same
+training recipe, and ~2-4 points lower on coding benchmarks — for domain CPT
+that gap is irrelevant. To force Qwen3.6 anyway, pass
+`--model-name unsloth/Qwen3.6-27B` and follow the FLA install instructions
+in the unsloth and fla-org repos.
 
 That single command:
 1. Loads `unsloth/Qwen3.6-27B` (16-bit LoRA by default).
