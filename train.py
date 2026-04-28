@@ -199,9 +199,14 @@ def main() -> None:
         load_in_16bit=not args.load_in_4bit,
         full_finetuning=False,
     )
-    eos_id = tokenizer.eos_token_id
-    print(f"  vocab={tokenizer.vocab_size}  eos={tokenizer.eos_token!r} ({eos_id})  "
-          f"pad={tokenizer.pad_token!r}  bf16={is_bfloat16_supported()}")
+
+    # Qwen3.6-27B is a vision-language model; FastLanguageModel returns a
+    # `Qwen3VLProcessor` whose `.tokenizer` attribute is the actual text
+    # tokenizer. Fall back to `tokenizer` itself for plain (text-only) models.
+    text_tokenizer = getattr(tokenizer, "tokenizer", tokenizer)
+    eos_id = text_tokenizer.eos_token_id
+    print(f"  vocab={text_tokenizer.vocab_size}  eos={text_tokenizer.eos_token!r} ({eos_id})  "
+          f"pad={text_tokenizer.pad_token!r}  bf16={is_bfloat16_supported()}")
 
     print(f"\n=== Loading HF dataset {args.hf_dataset} ===")
     raw = load_dataset(args.hf_dataset, split="train")
@@ -241,7 +246,7 @@ def main() -> None:
     BATCH = 2000
     token_lists: list[list[int]] = []
     for start in range(0, len(sampled_texts), BATCH):
-        enc = tokenizer(
+        enc = text_tokenizer(
             sampled_texts[start:start + BATCH],
             add_special_tokens=False,
             return_attention_mask=False,
