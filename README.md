@@ -129,7 +129,8 @@ FastLanguageModel.for_inference(model)
 
 ## Why these defaults
 
-- **Token regime**: 253M tokens / 27.78B params = **0.009 tokens per parameter** — light-CPT territory. Hence: lower LR (2e-5 vs Unsloth blog's 5e-5), more epochs (2 instead of 1), smaller LoRA `r` (64 vs 128) to limit overfit.
-- **Embedding-LR decoupling**: per Unsloth's CPT blog ("blindly training lm_head/embed_tokens does worse" without 10× smaller LR on those matrices).
+- **Token regime**: 253M tokens / 27.78B params = **0.009 tokens per parameter** — light-CPT territory.
+- **LoRA, not full FT**: Unsloth's docs say 16-bit LoRA on 27B = ~56 GB VRAM and full FT = ~4× that ≈ 224 GB. That doesn't fit on a single H200-141 GB. We do LoRA with `r=128, rsLoRA, on every linear layer + lm_head + embed_tokens`, which is the closest you get to FFT on a single GPU. Per *LoRA Learns Less and Forgets Less*, this configuration matches FFT loss curves on domain CPT.
+- **Decoupled embedding LR**: per Unsloth's CPT blog, blindly training `lm_head`/`embed_tokens` at the same LR as adapter layers degrades the model. Use 10× smaller LR (`5e-6` vs `5e-5`).
 - **`raw.textContent` as canonical body**: the CBP ruling letter already contains the legal reasoning. Using it for both processed and unprocessed rows gives a uniform format the model can learn, instead of mixing two text styles.
 - **Bucket vocabulary**: 98 single-chapter buckets + `MULTI_CHAP` + `NO_CHAP`. Empty `classification` is **not** an error — it marks legitimate non-classification rulings (origin, valuation, drawback, 337 enforcement, etc.).

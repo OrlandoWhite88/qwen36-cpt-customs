@@ -21,6 +21,15 @@ import time
 from collections import Counter
 from typing import Any
 
+# Eagerly import torch._inductor.config so that unsloth_zoo's import-time call to
+# `inspect.getsource(torch._inductor.config)` works on torch>=2.4 where the submodule
+# is no longer auto-attached to torch._inductor. Defensive: silently no-ops if torch
+# isn't installed yet (e.g. when running --help on a fresh VM).
+try:  # noqa: SIM105
+    import torch._inductor.config  # noqa: F401
+except Exception:
+    pass
+
 
 # ---------------- balancing --------------------------------------------------
 
@@ -134,16 +143,20 @@ def parse_args() -> argparse.Namespace:
                    help="QLoRA mode for 24-48GB GPUs (default off; 16-bit LoRA).")
 
     g = p.add_argument_group("lora")
-    g.add_argument("--lora-r", type=int, default=64)
-    g.add_argument("--lora-alpha", type=int, default=16)
+    g.add_argument("--lora-r", type=int, default=128,
+                   help="LoRA rank (default 128). Unsloth's published CPT recipe uses r=256 "
+                        "on a 24GB L4; on an H200 r=128 is the sweet spot. Drop to 64 on 24-48GB.")
+    g.add_argument("--lora-alpha", type=int, default=32,
+                   help="LoRA alpha (default 32). With rsLoRA the effective scale is alpha/sqrt(r), "
+                        "so 32/sqrt(128) ~= 2.83.")
     g.add_argument("--no-rslora", dest="use_rslora", action="store_false", default=True)
     g.add_argument("--no-embedding-tuning", dest="tune_embeddings", action="store_false", default=True,
                    help="Drop lm_head + embed_tokens from LoRA targets (saves VRAM, hurts CPT).")
 
     g = p.add_argument_group("optim")
-    g.add_argument("--learning-rate", type=float, default=2e-5,
-                   help="Tuned for ~0.007 tokens-per-param CPT regime (default 2e-5).")
-    g.add_argument("--embedding-learning-rate", type=float, default=2e-6,
+    g.add_argument("--learning-rate", type=float, default=5e-5,
+                   help="LoRA learning rate (default 5e-5; Unsloth's published CPT recipe).")
+    g.add_argument("--embedding-learning-rate", type=float, default=5e-6,
                    help="10x smaller than LR for embed_tokens/lm_head (Unsloth recipe).")
     g.add_argument("--num-epochs", type=float, default=2.0)
     g.add_argument("--per-device-bs", type=int, default=1)
