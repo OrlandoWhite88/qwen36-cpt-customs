@@ -1,0 +1,4 @@
+unsloth
+datasets
+huggingface_hub
+transformers>=5

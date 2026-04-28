@@ -1,0 +1,25 @@
+# Datasets (large, kept on HF Hub instead)
+*.ndjson
+*.jsonl
+*.parquet
+
+# Training artifacts
+outputs/
+checkpoints/
+wandb/
+runs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.python-version
+*.egg-info/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
